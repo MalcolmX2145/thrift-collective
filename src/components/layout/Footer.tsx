@@ -3,11 +3,18 @@ import { Instagram, Twitter, Facebook, MapPin, Phone, Mail } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="bg-foreground text-background pb-20 md:pb-0">
+    <footer className="bg-background text-foreground pb-20 md:pb-0">
       <div className="container-custom py-12 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
+            <Link to="/" className="inline-block mb-4">
+              <img
+                src="/thriftpic-removebg-preview.png"
+                alt="The Thrift Collective"
+                className="h-16 w-auto object-contain"
+              />
+            </Link>
             <h3 className="font-display text-xl font-bold mb-4">
               The Thrift<span className="text-primary">Collective</span>
             </h3>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCartStore } from '@/stores/cartStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ModeToggle } from '@/components/mode-toggle';
 
 const navLinks = [
   { name: 'Home', href: '/' },
@@ -21,21 +22,25 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container-custom">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 -ml-2"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 -ml-2"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <h1 className="font-display text-xl md:text-2xl font-bold text-foreground">
-              The Thrift<span className="text-primary">Collective</span>
-            </h1>
-          </Link>
+            {/* Logo */}
+            <Link to="/" className="flex items-center">
+              <img
+                src="/thriftpic-removebg-preview.png"
+                alt="The Thrift Collective"
+                className="h-14 md:h-20 w-auto object-contain"
+              />
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -52,6 +57,7 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center space-x-2 md:space-x-4">
+            <ModeToggle />
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 hover:bg-muted rounded-full transition-colors"
