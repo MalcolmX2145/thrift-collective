@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Filter, X, ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Filter, X, ChevronDown, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ProductCard } from '@/components/ProductCard';
-import { mockProducts } from '@/data/products';
+import { fetchProducts } from '@/services/api';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -32,6 +33,11 @@ export default function Shop() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
 
+  const { data: products = [], isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts,
+  });
+
   // Get filter values from URL
   const selectedCategory = searchParams.get('category') || 'All';
   const selectedSubcategory = searchParams.get('subcategory') || 'All';
@@ -39,7 +45,7 @@ export default function Shop() {
   const selectedCollection = searchParams.get('collection') || 'all';
 
   // Filter products
-  let filteredProducts = mockProducts.filter((p) => !p.isSold);
+  let filteredProducts = products.filter((p) => !p.isSold);
 
   if (selectedCategory !== 'All') {
     filteredProducts = filteredProducts.filter(
@@ -111,6 +117,22 @@ export default function Shop() {
     selectedSubcategory !== 'All' ||
     selectedCondition !== 'All' ||
     selectedCollection !== 'all';
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-red-500">Failed to load products. Please try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

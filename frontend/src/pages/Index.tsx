@@ -1,25 +1,58 @@
+import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { HeroSection } from '@/components/HeroSection';
 import { CategoryGrid } from '@/components/CategoryGrid';
 import { ProductSection } from '@/components/ProductSection';
-import { getProductsByCollection } from '@/data/products';
+import { fetchProducts } from '@/services/api';
+import { Product } from '@/types';
 
 const Index = () => {
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts,
+  });
+
+  const getProductsByCollection = (type: string): Product[] => {
+    switch (type) {
+      case 'new-arrivals':
+        return products.filter(p => p.isNew && !p.isSold).slice(0, 8);
+      case 'trending':
+        return products.filter(p => p.isTrending && !p.isSold).slice(0, 8);
+      case 'premium':
+        return products.filter(p => p.isPremium && !p.isSold).slice(0, 8);
+      case 'deals':
+        return products.filter(p => (p.isDeal || p.price <= 500) && !p.isSold).slice(0, 8);
+      case 'jackets':
+        return products.filter(p => p.subCategory === 'JACKETS' && !p.isSold).slice(0, 8);
+      default:
+        return products.filter(p => !p.isSold).slice(0, 8);
+    }
+  };
+
   const newArrivals = getProductsByCollection('new-arrivals');
   const trending = getProductsByCollection('trending');
   const premium = getProductsByCollection('premium');
   const deals = getProductsByCollection('deals');
   const jackets = getProductsByCollection('jackets');
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main>
         <HeroSection />
-        
+
         <CategoryGrid />
 
         <ProductSection

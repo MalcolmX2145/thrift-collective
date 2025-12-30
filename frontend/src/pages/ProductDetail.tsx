@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Share2, ShoppingBag, Check } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Share2, ShoppingBag, Check, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { getProductById, getSimilarProducts } from '@/data/products';
+import { fetchProductById, fetchProducts } from '@/services/api';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -25,11 +26,39 @@ export default function ProductDetail() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
 
-  const product = id ? getProductById(id) : undefined;
-  const similarProducts = product ? getSimilarProducts(product) : [];
+  const { data: product, isLoading: isLoadingProduct, error } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => fetchProductById(id!),
+    enabled: !!id,
+  });
+
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts,
+  });
+
+  const similarProducts = product
+    ? allProducts
+      .filter(
+        (p) =>
+          p.id !== product.id &&
+          (p.category === product.category || p.subCategory === product.subCategory) &&
+          !p.isSold
+      )
+      .slice(0, 4)
+    : [];
+
   const inCart = product ? isInCart(product.id) : false;
 
-  if (!product) {
+  if (isLoadingProduct) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -222,8 +251,8 @@ export default function ProductDetail() {
                     product.condition === 'Like New'
                       ? 'bg-success/10 text-success'
                       : product.condition === 'Vintage'
-                      ? 'bg-accent/20 text-accent-foreground'
-                      : 'bg-muted text-muted-foreground'
+                        ? 'bg-accent/20 text-accent-foreground'
+                        : 'bg-muted text-muted-foreground'
                   )}
                 >
                   {product.condition}
