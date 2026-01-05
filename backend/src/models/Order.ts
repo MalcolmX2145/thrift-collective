@@ -101,3 +101,7 @@ export const findOrdersByUserId = async (userId: string): Promise<Order[]> => {
     const result = await query(sql, [userId]);
     return result.rows;
 };
+
+export const updateOrderStatus = async (id: string, status: string): Promise<void> => {
+    await query('UPDATE orders SET status = $1 WHERE id = $2', [status, id]);
+};

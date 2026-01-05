@@ -24,6 +24,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addItem, isInCart } = useCartStore();
+  const { user, isAuthenticated } = useAuthStore(); // Fixed: Hook moved here
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
@@ -81,7 +82,7 @@ export default function ProductDetail() {
 
   const formatPrice = (price: number) => `KES ${price.toLocaleString()}`;
 
-  const { user, isAuthenticated } = useAuthStore();
+  // useAuthStore is already called at the top of the component
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
@@ -272,7 +273,7 @@ export default function ProductDetail() {
                 >
                   {product.condition}
                 </span>
-                {!product.isSold && (
+                {product.stock_quantity === 1 && !product.isSold && (
                   <span className="badge-urgent flex items-center gap-1">
                     <span className="h-1.5 w-1.5 bg-warning-foreground rounded-full animate-pulse" />
                     Only 1 left in stock!

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createPayment, updatePaymentStatus, findPaymentByCheckoutRequestId } from '../models/Payment';
-// In a real implementation, we would import a Daraja/Mpesa service here to make the actual request.
+import { initiateSTKPush } from '../services/mpesa';
+import { updateOrderStatus } from '../models/Order';
 // For now, we will simulate the initiation and provide an endpoint that Safaricom would call.
 
 export const initiatePayment = async (req: Request, res: Response) => {
@@ -12,33 +13,37 @@ export const initiatePayment = async (req: Request, res: Response) => {
     }
 
     try {
-        // SIMULATION: In real life, we'd call axios.post to Safaricom Daraja API here.
-        // We'd get back a MerchantRequestID and CheckoutRequestID.
-        // We'll generate fake ones for this demo to verify the flow logic.
-        const mockMerchantRequestId = `MR-${Date.now()}`;
-        const mockCheckoutRequestId = `CR-${Date.now()}`;
+        // Initiate STK Push via Daraja
+        const stkResponse = await initiateSTKPush({
+            phoneNumber: phone_number,
+            amount: amount,
+            accountReference: `Order ${order_id.substring(0, 8)}`,
+            transactionDesc: 'Payment for Thrift Collective Order'
+        });
 
-        const payment = await createPayment({
+        const { MerchantRequestID, CheckoutRequestID, ResponseCode, CustomerMessage } = stkResponse;
+
+        // Save initial payment record
+        await createPayment({
             order_id,
             amount,
             phone_number,
-            merchant_request_id: mockMerchantRequestId,
-            checkout_request_id: mockCheckoutRequestId
+            merchant_request_id: MerchantRequestID,
+            checkout_request_id: CheckoutRequestID
         });
 
-        // Respond to frontend that STK push was "sent"
         res.json({
             message: 'STK Push initiated successfully',
             data: {
-                MerchantRequestID: mockMerchantRequestId,
-                CheckoutRequestID: mockCheckoutRequestId,
-                ResponseCode: "0",
-                CustomerMessage: "Success. Request accepted for processing"
+                MerchantRequestID,
+                CheckoutRequestID,
+                ResponseCode,
+                CustomerMessage
             }
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error initiating payment:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 };
 
@@ -66,7 +71,11 @@ export const mpesaCallback = async (req: Request, res: Response) => {
             if (codeItem) transactionCode = codeItem.Value;
         }
 
-        await updatePaymentStatus(CheckoutRequestID, status, transactionCode, ResultDesc);
+        const payment = await updatePaymentStatus(CheckoutRequestID, status, transactionCode, ResultDesc);
+
+        if (payment && status === 'SUCCESS') {
+            await updateOrderStatus(payment.order_id, 'PAID');
+        }
 
         console.log(`M-Pesa Callback processed: ${status} for ${CheckoutRequestID}`);
 

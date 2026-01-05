@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Phone, MapPin, Truck, Check, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -93,18 +93,50 @@ export default function Checkout() {
 
   const { user } = useAuthStore();
 
+  // Polling state
+  const [orderId, setOrderId] = useState<string | null>(null);
+
+  // Poll for order status
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (paymentStatus === 'pending' && orderId) {
+      intervalId = setInterval(async () => {
+        try {
+          const res = await api.get(`/orders/${orderId}`);
+          // Check if order status is PAID
+          if (res.data.status === 'PAID') {
+            setPaymentStatus('success');
+            clearCart();
+            toast({
+              title: 'Payment Successful!',
+              description: 'Your order has been confirmed.',
+            });
+            setTimeout(() => navigate('/account'), 3000); // Redirect to account/orders instead of generic success for now
+          }
+        } catch (error) {
+          console.error('Polling error', error);
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [paymentStatus, orderId, navigate, clearCart, toast]);
+
   const handlePayment = async () => {
     setPaymentStatus('pending');
 
     try {
       // Create Order Payload
       const orderData = {
-        user_id: user?.id, // Can be undefined if guest
+        user_id: user?.id,
         items: items.map(item => ({
           productId: item.productId,
           name: item.name,
           price: item.price,
-          quantity: 1, // Defaulting to 1 for now
+          quantity: item.quantity, // Setup quantity correctly from cart item
           image: item.image
         })),
         total_amount: total,
@@ -118,30 +150,28 @@ export default function Checkout() {
       };
 
       // 1. Create Order in Backend
-      const response = await api.post('/orders', orderData);
+      const orderRes = await api.post('/orders', orderData);
+      const newOrderId = orderRes.data.order.id;
+      setOrderId(newOrderId);
 
-      if (response.status === 201) {
-        // Success!
-        setPaymentStatus('success');
-        clearCart();
+      // 2. Initiate M-Pesa Payment
+      await api.post('/payments/initiate', {
+        order_id: newOrderId,
+        amount: total,
+        phone_number: phone
+      });
 
-        toast({
-          title: 'Order Placed Successfully!',
-          description: 'Your order has been saved to our database.',
-        });
+      toast({
+        title: 'M-Pesa Request Sent',
+        description: 'Please check your phone to complete the payment.',
+      });
 
-        // Redirect to success page
-        setTimeout(() => {
-          navigate('/order-success');
-        }, 2000);
-      }
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
       setPaymentStatus('failed');
       toast({
         title: 'Order Failed',
-        description: 'Could not place order. Please try again.',
+        description: error.response?.data?.error || 'Could not place order. Please try again.',
         variant: 'destructive',
       });
     }
