@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
+import api from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -89,33 +91,57 @@ export default function Checkout() {
     setStep(2);
   };
 
+  const { user } = useAuthStore();
+
   const handlePayment = async () => {
     setPaymentStatus('pending');
 
-    // Simulate M-Pesa STK push
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      // Create Order Payload
+      const orderData = {
+        user_id: user?.id, // Can be undefined if guest
+        items: items.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: 1, // Defaulting to 1 for now
+          image: item.image
+        })),
+        total_amount: total,
+        delivery_fee: deliveryFee,
+        shipping_info: {
+          fullName,
+          phone,
+          address,
+          deliveryOption
+        }
+      };
 
-    // Simulate success (80% chance) or failure (20% chance)
-    const isSuccess = Math.random() > 0.2;
+      // 1. Create Order in Backend
+      const response = await api.post('/orders', orderData);
 
-    if (isSuccess) {
-      setPaymentStatus('success');
-      clearCart();
+      if (response.status === 201) {
+        // Success!
+        setPaymentStatus('success');
+        clearCart();
 
-      toast({
-        title: 'Payment Successful!',
-        description: 'Your order has been confirmed.',
-      });
+        toast({
+          title: 'Order Placed Successfully!',
+          description: 'Your order has been saved to our database.',
+        });
 
-      // Redirect to success page after a short delay
-      setTimeout(() => {
-        navigate('/order-success');
-      }, 2000);
-    } else {
+        // Redirect to success page
+        setTimeout(() => {
+          navigate('/order-success');
+        }, 2000);
+      }
+
+    } catch (error) {
+      console.error('Checkout error:', error);
       setPaymentStatus('failed');
       toast({
-        title: 'Payment Failed',
-        description: 'Please try again or use a different phone number.',
+        title: 'Order Failed',
+        description: 'Could not place order. Please try again.',
         variant: 'destructive',
       });
     }

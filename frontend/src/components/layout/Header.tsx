@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, Menu, X, Search, User } from 'lucide-react';
 import { useState } from 'react';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ModeToggle } from '@/components/mode-toggle';
@@ -14,9 +15,11 @@ const navLinks = [
 ];
 
 export function Header() {
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const itemCount = useCartStore((state) => state.getItemCount());
+  const { user, isAuthenticated } = useAuthStore();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -44,15 +47,45 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors link-underline"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              // Parse link and location
+              const [linkPath, linkQuery] = link.href.split('?');
+              const linkParams = new URLSearchParams(linkQuery);
+              const locationParams = new URLSearchParams(location.search);
+
+              let isActive = false;
+
+              if (link.href === '/') {
+                isActive = location.pathname === '/';
+              } else if (location.pathname === linkPath) {
+                // If paths match, check params
+                const linkParamEntries = Array.from(linkParams.entries());
+
+                if (linkParamEntries.length === 0) {
+                  // Generic link (e.g. /shop) - active only if no specific collection is selected (or collection=all)
+                  const currentCollection = locationParams.get('collection');
+                  isActive = !currentCollection || currentCollection === 'all';
+                } else {
+                  // Specific link (e.g. /shop?collection=x) - active if all params match
+                  isActive = linkParamEntries.every(
+                    ([key, val]) => locationParams.get(key) === val
+                  );
+                }
+              }
+
+              return (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className={cn(
+                    "text-sm font-medium transition-colors link-underline",
+                    isActive ? "text-foreground font-semibold link-underline-active" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right Actions */}
@@ -67,11 +100,19 @@ export function Header() {
             </button>
 
             <Link
-              to="/account"
+              to={isAuthenticated ? "/account" : "/login"}
               className="hidden md:flex p-2 hover:bg-muted rounded-full transition-colors"
               aria-label="Account"
             >
-              <User className="h-5 w-5" />
+              {isAuthenticated && user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+              ) : (
+                <User className="h-5 w-5" />
+              )}
             </Link>
 
             <Link to="/cart" className="relative p-2 hover:bg-muted rounded-full transition-colors">
@@ -130,6 +171,6 @@ export function Header() {
           </Link>
         </nav>
       </div>
-    </header>
+    </header >
   );
 }

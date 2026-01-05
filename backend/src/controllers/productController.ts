@@ -23,6 +23,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
             isPremium: row.is_premium,
             isDeal: row.is_deal,
             measurements: row.measurements,
+            stock_quantity: row.stock_quantity,
             createdAt: row.created_at,
         }));
 
@@ -61,6 +62,7 @@ export const getProductById = async (req: Request, res: Response) => {
             isPremium: row.is_premium,
             isDeal: row.is_deal,
             measurements: row.measurements,
+            stock_quantity: row.stock_quantity,
             createdAt: row.created_at,
         };
 

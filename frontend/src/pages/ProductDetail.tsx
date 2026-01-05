@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Share2, ShoppingBag, Check, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Share2, ShoppingBag, Check, Loader2, Minus, Plus } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -9,6 +9,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { fetchProductById, fetchProducts } from '@/services/api';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
@@ -25,6 +26,7 @@ export default function ProductDetail() {
   const { addItem, isInCart } = useCartStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [quantity, setQuantity] = useState(1);
 
   const { data: product, isLoading: isLoadingProduct, error } = useQuery({
     queryKey: ['product', id],
@@ -79,7 +81,19 @@ export default function ProductDetail() {
 
   const formatPrice = (price: number) => `KES ${price.toLocaleString()}`;
 
+  const { user, isAuthenticated } = useAuthStore();
+
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in to add items to your cart.',
+        variant: 'destructive',
+      });
+      navigate('/login');
+      return;
+    }
+
     if (product.sizes.length > 0 && !selectedSize) {
       toast({
         title: 'Please select a size',
@@ -95,11 +109,12 @@ export default function ProductDetail() {
       price: product.price,
       image: product.images[0],
       size: selectedSize || product.sizes[0],
+      quantity: quantity,
     });
 
     toast({
       title: 'Added to cart!',
-      description: `${product.name} has been added to your cart.`,
+      description: `${quantity}x ${product.name} has been added to your cart.`,
     });
   };
 
@@ -290,13 +305,60 @@ export default function ProductDetail() {
                 </div>
               )}
 
+              {/* Stock Status */}
+              <div className="mb-6">
+                {product.stock_quantity > 0 ? (
+                  <div className="flex items-center gap-2 text-success font-medium">
+                    <span className="w-2 h-2 rounded-full bg-success"></span>
+                    In Stock ({product.stock_quantity} available)
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-destructive font-medium">
+                    <span className="w-2 h-2 rounded-full bg-destructive"></span>
+                    Out of Stock
+                  </div>
+                )}
+              </div>
+
+              {/* Quantity Selector */}
+              {product.stock_quantity > 0 && (
+                <div className="mb-8">
+                  <label className="block text-sm font-medium mb-3">Quantity</label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-border hover:border-primary hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+
+                    <span className="w-12 text-center font-medium text-lg">
+                      {quantity}
+                    </span>
+
+                    <button
+                      onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
+                      disabled={quantity >= product.stock_quantity}
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-border hover:border-primary hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {product.stock_quantity} available
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Add to Cart - Desktop */}
               <div className="hidden md:flex gap-4">
                 <Button
                   variant={inCart ? 'secondary' : 'cart'}
                   size="lg"
+                  disabled={inCart || product.isSold || product.stock_quantity === 0}
                   onClick={handleAddToCart}
-                  disabled={inCart || product.isSold}
                   className="flex-1"
                 >
                   {product.isSold ? (

@@ -16,9 +16,15 @@ app.use(express.json());
 // Routes
 import { router as healthRoutes } from './routes/healthRoutes';
 import productRoutes from './routes/productRoutes';
+import userRoutes from './routes/userRoutes';
+import orderRoutes from './routes/orderRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 app.use('/api', healthRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
 
 import { query } from './config/db';
 

@@ -21,6 +21,7 @@ export interface Product {
     waist?: string;
     inseam?: string;
   };
+  stock_quantity: number;
   createdAt: string;
 }
 
@@ -30,6 +31,7 @@ export interface CartItem {
   price: number;
   image: string;
   size?: string;
+  quantity: number;
 }
 
 export interface User {
@@ -38,17 +40,21 @@ export interface User {
   name: string;
   phone?: string;
   role: 'USER' | 'ADMIN';
+  avatar_url?: string;
 }
 
 export interface Order {
   id: string;
-  items: CartItem[];
-  total: number;
-  deliveryFee: number;
-  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED';
-  shippingInfo: ShippingInfo;
-  paymentStatus: 'PENDING' | 'SUCCESS' | 'FAILED';
-  createdAt: string;
+  user_id: string;
+  total_amount: number;
+  delivery_fee: number;
+  status: 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  shipping_full_name: string;
+  shipping_phone: string;
+  shipping_address: string;
+  shipping_delivery_option: string;
+  created_at: string;
+  items?: CartItem[]; // Optional as we might disjointly load them
 }
 
 export interface ShippingInfo {

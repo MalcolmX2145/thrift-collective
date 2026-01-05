@@ -9,6 +9,7 @@ interface AuthStore {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   signup: (data: { name: string; email: string; password: string; phone: string }) => Promise<void>;
+  setUser: (user: User) => void;
 }
 
 // Mock user for demo purposes
@@ -33,37 +34,54 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      
+
       login: async (email: string, password: string) => {
-        // Mock login - in production, this would call an API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (email === 'admin@thriftcollective.co.ke' && password === 'admin123') {
-          set({ user: mockAdmin, token: 'mock_admin_token', isAuthenticated: true });
-        } else if (password === 'demo123') {
-          set({ user: { ...mockUser, email }, token: 'mock_token', isAuthenticated: true });
-        } else {
-          throw new Error('Invalid credentials');
+        try {
+          const response = await fetch('http://localhost:5000/api/users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Login failed');
+          }
+
+          const data = await response.json();
+          set({ user: data.user, token: data.token, isAuthenticated: true });
+        } catch (error: any) {
+          throw new Error(error.message || 'Login failed');
         }
       },
-      
+
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
       },
-      
+
       signup: async (data) => {
-        // Mock signup - in production, this would call an API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const newUser: User = {
-          id: `user_${Date.now()}`,
-          email: data.email,
-          name: data.name,
-          phone: data.phone,
-          role: 'USER',
-        };
-        
-        set({ user: newUser, token: 'mock_token', isAuthenticated: true });
+        try {
+          const response = await fetch('http://localhost:5000/api/users/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Signup failed');
+          }
+
+          const resData = await response.json();
+          // Backend signup returns { user, token }
+          set({ user: resData.user, token: resData.token, isAuthenticated: true });
+        } catch (error: any) {
+          throw new Error(error.message || 'Signup failed');
+        }
+      },
+
+      setUser: (user: User) => {
+        set({ user, token: 'google_token', isAuthenticated: true });
       },
     }),
     {

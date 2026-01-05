@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Eye } from 'lucide-react';
 import { Product } from '@/types';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,8 +16,21 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const { toast } = useToast();
   const inCart = isInCart(product.id);
 
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please log in to add items to your cart.',
+        variant: 'destructive',
+      });
+      navigate('/login');
+      return;
+    }
+
     if (!inCart && !product.isSold) {
       addItem({
         productId: product.id,
@@ -24,6 +38,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         price: product.price,
         image: product.images[0],
         size: product.sizes[0],
+        quantity: 1,
       });
       toast({
         title: 'Added to cart',
@@ -87,10 +102,15 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </button>
         </div>
 
-        {/* Only 1 Left Badge */}
-        {!product.isSold && (
+        {/* Stock Badge */}
+        {!product.isSold && product.stock_quantity > 0 && (
           <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span className="badge-urgent">Only 1 left!</span>
+            <span className={cn(
+              "font-medium bg-background/90 px-2 py-1 rounded text-xs",
+              product.stock_quantity === 1 ? "text-destructive font-bold border border-destructive/50" : "text-foreground"
+            )}>
+              {product.stock_quantity === 1 ? "Only 1 left!" : `${product.stock_quantity} left`}
+            </span>
           </div>
         )}
       </div>

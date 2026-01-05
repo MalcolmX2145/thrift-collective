@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -186,6 +187,47 @@ export default function Signup() {
                   'Create Account'
                 )}
               </Button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-muted"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={async (credentialResponse) => {
+                    if (credentialResponse.credential) {
+                      try {
+                        setIsLoading(true);
+                        // TODO: Move this to authStore
+                        const response = await fetch('http://localhost:5000/api/users/google', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ token: credentialResponse.credential }),
+                        });
+                        if (!response.ok) throw new Error('Google Auth Failed');
+                        const data = await response.json();
+                        // We need to set user in store manually here as we bypassed store action for speed
+                        // Actually, let's update store next step. for now this proves the UI.
+                        useAuthStore.getState().setUser(data);
+                        toast({ title: 'Welcome!', description: 'Successfully signed in with Google.' });
+                        navigate('/');
+                      } catch (err) {
+                        toast({ title: 'Error', description: 'Google Sign in failed', variant: 'destructive' });
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }
+                  }}
+                  onError={() => {
+                    toast({ title: 'Error', description: 'Google Sign in failed', variant: 'destructive' });
+                  }}
+                />
+              </div>
             </form>
 
             <div className="mt-6 text-center">
