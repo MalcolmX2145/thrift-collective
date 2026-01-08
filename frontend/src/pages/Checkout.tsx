@@ -59,6 +59,11 @@ export default function Checkout() {
   const deliveryFee = deliveryOptions.find((o) => o.id === deliveryOption)?.price || 0;
   const total = subtotal + deliveryFee;
 
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
   const formatPrice = (price: number) => `KES ${price.toLocaleString()}`;
 
   const validatePhone = (value: string) => {

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { query } from '../config/db';
+import { createProduct as createProductModel, updateProduct as updateProductModel, deleteProduct as deleteProductModel } from '../models/Product';
 
 export const getAllProducts = async (req: Request, res: Response) => {
     try {
@@ -69,6 +70,62 @@ export const getProductById = async (req: Request, res: Response) => {
         res.json(product);
     } catch (error) {
         console.error('Error fetching product:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Admin: Create Product
+export const createProduct = async (req: Request, res: Response) => {
+    try {
+        const productData = req.body;
+
+        // Validate required fields
+        if (!productData.name || !productData.price || !productData.category) {
+            res.status(400).json({ error: 'Name, price, and category are required' });
+            return;
+        }
+
+        const product = await createProductModel(productData);
+        res.status(201).json(product);
+    } catch (error) {
+        console.error('Error creating product:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Admin: Update Product
+export const updateProduct = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const productData = req.body;
+        const product = await updateProductModel(id, productData);
+
+        if (!product) {
+            res.status(404).json({ error: 'Product not found' });
+            return;
+        }
+
+        res.json(product);
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Admin: Delete Product
+export const deleteProduct = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const deleted = await deleteProductModel(id);
+
+        if (!deleted) {
+            res.status(404).json({ error: 'Product not found' });
+            return;
+        }
+
+        res.json({ message: 'Product deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting product:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

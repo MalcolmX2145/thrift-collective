@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X, Search, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, Search, User, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -91,6 +91,20 @@ export function Header() {
           {/* Right Actions */}
           <div className="flex items-center space-x-2 md:space-x-4">
             <ModeToggle />
+
+            {/* Admin Button - Only show for the specific admin user */}
+            {isAuthenticated && user?.role === 'ADMIN' && user?.email === 'admin@thriftcollective.com' && (
+              <Link
+                to="/admin"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
+
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 hover:bg-muted rounded-full transition-colors"
@@ -169,6 +183,18 @@ export function Header() {
           >
             My Account
           </Link>
+          {isAuthenticated && user?.role === 'ADMIN' && (
+            <Link
+              to="/admin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block py-3 text-lg font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Shield className="h-5 w-5" />
+              Admin Panel
+            </Link>
+          )}
         </nav>
       </div>
     </header >

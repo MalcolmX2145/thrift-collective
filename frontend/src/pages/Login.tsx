@@ -168,7 +168,7 @@ export default function Login() {
             {/* Demo Credentials */}
             <div className="mt-6 p-4 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo:</strong> Use any email with password <code className="bg-background px-1 rounded">demo123</code>
+                <strong>Admin Demo:</strong> Email: <code className="bg-background px-1 rounded">admin@thriftcollective.com</code> Password: <code className="bg-background px-1 rounded">Admin@2026</code>
               </p>
             </div>
           </div>

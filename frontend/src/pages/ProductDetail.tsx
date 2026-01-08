@@ -95,7 +95,7 @@ export default function ProductDetail() {
       return;
     }
 
-    if (product.sizes.length > 0 && !selectedSize) {
+    if (product.sizes.length > 0 && product.sizes[0] !== 'One Size' && !selectedSize) {
       toast({
         title: 'Please select a size',
         description: 'Choose a size before adding to cart.',

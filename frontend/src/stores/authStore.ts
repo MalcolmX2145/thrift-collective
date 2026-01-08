@@ -48,8 +48,9 @@ export const useAuthStore = create<AuthStore>()(
             throw new Error(error.error || 'Login failed');
           }
 
-          const data = await response.json();
-          set({ user: data.user, token: data.token, isAuthenticated: true });
+          const user = await response.json();
+          // API returns user object directly, not wrapped
+          set({ user, token: user.id, isAuthenticated: true });
         } catch (error: any) {
           throw new Error(error.message || 'Login failed');
         }
