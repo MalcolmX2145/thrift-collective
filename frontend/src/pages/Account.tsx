@@ -95,7 +95,7 @@ export default function Account() {
           </div>
 
           {/* Admin Badge */}
-          {user?.role === 'ADMIN' && (
+          {user?.role === 'ADMIN' && user?.email === 'admin@thriftcollective.com' && (
             <Link
               to="/admin"
               className="block mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg hover:bg-secondary/30 transition-colors"
