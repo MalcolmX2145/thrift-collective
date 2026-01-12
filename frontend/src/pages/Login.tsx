@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { getApiUrl } from '@/services/api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -132,7 +133,7 @@ export default function Login() {
                     if (credentialResponse.credential) {
                       try {
                         setIsLoading(true);
-                        const response = await fetch('http://localhost:5000/api/users/google', {
+                        const response = await fetch(`${getApiUrl()}/users/google`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ token: credentialResponse.credential }),

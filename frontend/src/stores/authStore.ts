@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '@/types';
+import { getApiUrl } from '../services/api';
 
 interface AuthStore {
   user: User | null;
@@ -37,7 +38,7 @@ export const useAuthStore = create<AuthStore>()(
 
       login: async (email: string, password: string) => {
         try {
-          const response = await fetch('http://localhost:5000/api/users/login', {
+          const response = await fetch(`${getApiUrl()}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -62,7 +63,7 @@ export const useAuthStore = create<AuthStore>()(
 
       signup: async (data) => {
         try {
-          const response = await fetch('http://localhost:5000/api/users/signup', {
+          const response = await fetch(`${getApiUrl()}/users/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),

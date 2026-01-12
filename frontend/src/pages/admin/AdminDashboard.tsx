@@ -4,7 +4,8 @@ import { Package, TrendingUp, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+import { getApiUrl } from '@/services/api';
+const API_URL = getApiUrl();
 
 export default function AdminDashboard() {
     const { data: products } = useQuery({

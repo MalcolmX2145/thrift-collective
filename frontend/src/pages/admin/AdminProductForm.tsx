@@ -7,7 +7,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+import { getApiUrl } from '@/services/api';
+const API_URL = getApiUrl();
 
 export default function AdminProductForm() {
     const { id } = useParams();
@@ -132,7 +133,8 @@ export default function AdminProductForm() {
                 },
             });
 
-            const imageUrl = `http://localhost:5000${response.data.url}`;
+            const baseUrl = API_URL.replace(/\/api$/, '');
+            const imageUrl = `${baseUrl}${response.data.url}`;
 
             setFormData(prev => ({
                 ...prev,

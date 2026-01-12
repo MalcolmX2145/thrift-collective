@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { getApiUrl } from '@/services/api';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -204,7 +205,7 @@ export default function Signup() {
                       try {
                         setIsLoading(true);
                         // TODO: Move this to authStore
-                        const response = await fetch('http://localhost:5000/api/users/google', {
+                        const response = await fetch(`${getApiUrl()}/users/google`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ token: credentialResponse.credential }),

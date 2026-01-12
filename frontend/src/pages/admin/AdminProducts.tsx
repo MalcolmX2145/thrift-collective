@@ -7,7 +7,8 @@ import axios from 'axios';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 
-const API_URL = 'http://localhost:5000/api';
+import { getApiUrl } from '@/services/api';
+const API_URL = getApiUrl();
 
 export default function AdminProducts() {
     const [searchTerm, setSearchTerm] = useState('');
